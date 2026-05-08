@@ -347,6 +347,59 @@ def chat_with_gemini(prompt):
             }
         
         result = parse_streaming_response(response.text)
+
+        # =========================
+# FORCE QUIZ JSON RESPONSE
+# =========================
+
+        if result:
+
+            clean = result.strip()
+
+    # markdown remove
+            clean = clean.replace("```json", "")
+            clean = clean.replace("```", "")
+            clean = clean.strip()
+
+    # যদি pure JSON already হয়
+            try:
+                parsed = json.loads(clean)
+
+                if isinstance(parsed, list):
+                    result = json.dumps(parsed, ensure_ascii=False)
+
+                elif isinstance(parsed, str):
+                    result = parsed
+
+            except:
+                pass
+
+    # যদি AI normal text দেয়
+    # তখন fallback fake MCQ বানাবে
+            try:
+
+                json.loads(result)
+
+            except:
+
+                fallback_quiz = [
+                    {
+                        "question": prompt[:80],
+                        "options": [
+                            "Option A",
+                            "Option B",
+                            "Option C",
+                            "Option D"
+                        ],
+                        "correctOptionIndex": 0,
+                        "explanation": result[:200]
+                    }
+                ]
+
+                result = json.dumps(
+                    fallback_quiz,
+                    ensure_ascii=False
+                )
         
         end_time = time.time()
         response_time = round(end_time - start_time, 2)
